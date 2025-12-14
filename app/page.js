@@ -180,11 +180,17 @@ export default function Home() {
     let x, y;
     
     if (avoidCenter) {
-      x = Math.random() > 0.5 ? Math.random() * 20 : 80 + Math.random() * 20;
-      y = Math.random() * 80 + 10;
+      // Position on left or right sides - but not too close to edges
+      x = Math.random() > 0.5 
+        ? 10 + Math.random() * 15  // Left side: 10-25%
+        : 75 + Math.random() * 15; // Right side: 75-90%
+      y = 15 + Math.random() * 70; // Vertical: 15-85%
     } else {
-      x = Math.random() * 100;
-      y = Math.random() > 0.5 ? Math.random() * 15 : 70 + Math.random() * 30;
+      // Position on top or bottom areas - avoid extreme edges
+      x = 15 + Math.random() * 70; // Horizontal: 15-85%
+      y = Math.random() > 0.5 
+        ? 10 + Math.random() * 15  // Top: 10-25%
+        : 70 + Math.random() * 20; // Bottom: 70-90%
     }
     
     const newParticipant = {
@@ -527,7 +533,10 @@ export default function Home() {
         )}
 
         {/* Participants count */}
-        <div className="text-center bg-white/10 backdrop-blur-md rounded-xl p-3 border-2 border-yellow-300/30">
+        <div 
+          key={`${phase}-${participants.length}`}
+          className="text-center bg-white/10 backdrop-blur-md rounded-xl p-3 border-2 border-yellow-300/30"
+        >
           <h3 className="text-lg font-bold text-yellow-300">
             {participants.length} {participants.length === 1 ? 'Participant' : 'Participants'}
           </h3>
