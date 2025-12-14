@@ -5,7 +5,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request) {
   try {
+    console.log('=== Email API Called ===');
     const { name, email } = await request.json();
+    console.log('Request data:', { name, email });
+    console.log('Environment check:', {
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      hasEmailFrom: !!process.env.EMAIL_FROM,
+      emailFrom: process.env.EMAIL_FROM
+    });
 
     const { data, error } = await resend.emails.send({
       from: process.env.EMAIL_FROM,
@@ -121,6 +128,7 @@ export async function POST(request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log('Email sent successfully!', data);
     return NextResponse.json({ success: true, id: data.id });
   } catch (error) {
     console.error('API error:', error);

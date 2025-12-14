@@ -207,6 +207,7 @@ export default function Home() {
     setFormData({ name: '', surname: '', email: '' });
     
     // Send confirmation email
+    console.log('Attempting to send confirmation email to:', formData.email);
     try {
       const response = await fetch('/api/send-confirmation', {
         method: 'POST',
@@ -217,8 +218,13 @@ export default function Home() {
         })
       });
       
+      const data = await response.json();
+      console.log('Email API response:', response.status, data);
+      
       if (!response.ok) {
-        console.error('Failed to send confirmation email');
+        console.error('Failed to send confirmation email:', data);
+      } else {
+        console.log('Email sent successfully!', data);
       }
     } catch (error) {
       console.error('Error sending confirmation email:', error);
