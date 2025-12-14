@@ -393,6 +393,9 @@ export default function Home() {
     let emailsSent = 0;
     let emailsFailed = 0;
     
+    // Add delay to respect Resend rate limit (2 emails per second)
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
     for (const assignment of newAssignments) {
       try {
         const response = await fetch('/api/send-assignment', {
@@ -412,6 +415,9 @@ export default function Home() {
           emailsFailed++;
           console.error(`❌ Failed to send email to ${assignment.giverName}`);
         }
+        
+        // Wait 600ms between emails (allows ~1.6 emails per second, safely under 2/sec limit)
+        await delay(600);
       } catch (error) {
         emailsFailed++;
         console.error(`❌ Error sending email to ${assignment.giverName}:`, error);
