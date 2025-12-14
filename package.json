@@ -13,7 +13,8 @@
     "react-dom": "^18.2.0",
     "next": "14.0.0",
     "@supabase/supabase-js": "^2.39.0",
-    "lucide-react": "^0.263.1"
+    "lucide-react": "^0.263.1",
+    "resend": "^3.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",

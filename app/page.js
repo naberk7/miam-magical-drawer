@@ -205,6 +205,24 @@ export default function Home() {
 
     setParticipants([...participants, newParticipant]);
     setFormData({ name: '', surname: '', email: '' });
+    
+    // Send confirmation email
+    try {
+      const response = await fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase()
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send confirmation email');
+      }
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+    }
   };
 
   const handleAdminLogin = () => {
