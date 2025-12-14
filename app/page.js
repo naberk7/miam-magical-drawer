@@ -68,9 +68,7 @@ export default function Home() {
 
       if (distance < 0) {
         setTimeRemaining(null);
-        if (phase === 'registration' && participants.length >= 3) {
-          performDraw();
-        }
+        // Timer expired - admin must manually perform draw
         return;
       }
 
