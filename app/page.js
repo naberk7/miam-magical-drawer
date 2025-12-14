@@ -322,7 +322,7 @@ export default function Home() {
     }
   };
 
-  const performDraw = () => {
+  const performDraw = async () => {
     if (participants.length < 3) {
       alert('You need at least 3 participants to perform a draw!');
       return;
@@ -380,7 +380,39 @@ export default function Home() {
     setPhase('drawn');
     
     console.log('Draw completed! Assignments:', newAssignments);
-    alert('Draw completed successfully! Check the admin panel to see assignments.');
+    
+    // Send assignment emails to all participants
+    console.log('Sending assignment emails to', newAssignments.length, 'participants...');
+    let emailsSent = 0;
+    let emailsFailed = 0;
+    
+    for (const assignment of newAssignments) {
+      try {
+        const response = await fetch('/api/send-assignment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            giverName: assignment.giverName,
+            giverEmail: assignment.giverEmail,
+            receiverName: assignment.receiverName
+          })
+        });
+        
+        if (response.ok) {
+          emailsSent++;
+          console.log(`✅ Email sent to ${assignment.giverName}`);
+        } else {
+          emailsFailed++;
+          console.error(`❌ Failed to send email to ${assignment.giverName}`);
+        }
+      } catch (error) {
+        emailsFailed++;
+        console.error(`❌ Error sending email to ${assignment.giverName}:`, error);
+      }
+    }
+    
+    console.log(`Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
+    alert(`Draw completed! ${emailsSent} assignment emails sent successfully!${emailsFailed > 0 ? ` (${emailsFailed} failed)` : ''}`);
   };
 
   const handleAdminClose = () => {
@@ -776,7 +808,7 @@ export default function Home() {
                     🔧 Reset for Testing
                   </button>
 
-                  <p className="text-center text-sm text-white/70">Email sending coming in Phase 4! 📧</p>
+                  <p className="text-center text-sm text-white/70">Emails are sent automatically! 📧✨</p>
                 </div>
               </div>
             )}
