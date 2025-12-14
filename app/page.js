@@ -20,6 +20,8 @@ export default function Home() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [dataId, setDataId] = useState(null);
+  const [userRegistered, setUserRegistered] = useState(false);
+  const [userNickname, setUserNickname] = useState('');
   
   const ADMIN_PASSWORD = '776110';
 
@@ -206,6 +208,10 @@ export default function Home() {
 
     setParticipants([...participants, newParticipant]);
     setFormData({ nickname: '', name: '', surname: '', email: '' });
+    
+    // Mark user as registered and save their nickname
+    setUserRegistered(true);
+    setUserNickname(formData.nickname.trim());
     
     // Send confirmation email
     console.log('Attempting to send confirmation email to:', formData.email);
@@ -533,64 +539,72 @@ export default function Home() {
 
         {/* Registration form or completion message */}
         {phase === 'registration' ? (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-5 mb-3 border-2 border-yellow-300/30">
-            <h2 className="text-lg sm:text-xl font-bold mb-3 text-center text-yellow-300">Register Now! 🎄</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-2">
-              <div>
-                <input
-                  type="text"
-                  value={formData.nickname}
-                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
-                  placeholder="Nickname"
-                />
-              </div>
-
-              <div>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
-                  placeholder="First Name"
-                />
-              </div>
-
-              <div>
-                <input
-                  type="text"
-                  value={formData.surname}
-                  onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
-                  placeholder="Last Name"
-                />
-              </div>
-
-              <div>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
-                  placeholder="Email"
-                />
-              </div>
-
-              {error && (
-                <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-2 text-center text-xs sm:text-sm">
-                  {error}
+          !userRegistered ? (
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-5 mb-3 border-2 border-yellow-300/30">
+              <h2 className="text-lg sm:text-xl font-bold mb-3 text-center text-yellow-300">Register Now! 🎄</h2>
+              
+              <form onSubmit={handleSubmit} className="space-y-2">
+                <div>
+                  <input
+                    type="text"
+                    value={formData.nickname}
+                    onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
+                    placeholder="Nickname"
+                  />
                 </div>
-              )}
 
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-bold py-2 rounded-lg transition-all transform hover:scale-105 text-sm"
-              >
-                Join! 🎅
-              </button>
-            </form>
-          </div>
+                <div>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
+                    placeholder="First Name"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    value={formData.surname}
+                    onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
+                    placeholder="Last Name"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
+                    placeholder="Email"
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-2 text-center text-xs sm:text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-bold py-2 rounded-lg transition-all transform hover:scale-105 text-sm"
+                >
+                  Join! 🎅
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="bg-green-600/30 backdrop-blur-md rounded-xl p-3 mb-3 border-2 border-green-400">
+              <p className="text-center text-white text-sm">
+                ✅ Done! Please check your inbox and see <span className="font-bold text-yellow-300">{userNickname}</span> floating around! 🎁
+              </p>
+            </div>
+          )
         ) : (
           <div className="bg-gradient-to-r from-green-600 to-red-600 backdrop-blur-md rounded-xl p-4 sm:p-6 mb-3 border-4 border-yellow-300 text-center">
             <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-white">🎁 Drawing is Done! 🎁</h2>
