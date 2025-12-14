@@ -98,7 +98,7 @@ export async function POST(request) {
                 <ul>
                   <li>🕐 Wait for the registration deadline</li>
                   <li>🎲 The magical draw will be performed</li>
-                  <li>📧 You'll receive another email with your assignment</li>
+                  <li>📧 You'll receive another email when drawing is done, and your assignee will be revealed!</li>
                   <li>🎵 Prepare your musical note gift!</li>
                 </ul>
                 
