@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 export default function Home() {
   const [participants, setParticipants] = useState([]);
-  const [formData, setFormData] = useState({ name: '', surname: '', email: '' });
+  const [formData, setFormData] = useState({ nickname: '', name: '', surname: '', email: '' });
   const [showAdmin, setShowAdmin] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -161,7 +161,7 @@ export default function Home() {
     e.preventDefault();
     setError('');
 
-    if (!formData.name.trim() || !formData.surname.trim() || !formData.email.trim()) {
+    if (!formData.nickname.trim() || !formData.name.trim() || !formData.surname.trim() || !formData.email.trim()) {
       setError('All fields are required');
       return;
     }
@@ -195,6 +195,7 @@ export default function Home() {
     
     const newParticipant = {
       id: Date.now(),
+      nickname: formData.nickname.trim(),
       name: formData.name.trim(),
       surname: formData.surname.trim(),
       email: formData.email.trim().toLowerCase(),
@@ -204,7 +205,7 @@ export default function Home() {
     };
 
     setParticipants([...participants, newParticipant]);
-    setFormData({ name: '', surname: '', email: '' });
+    setFormData({ nickname: '', name: '', surname: '', email: '' });
     
     // Send confirmation email
     console.log('Attempting to send confirmation email to:', formData.email);
@@ -476,7 +477,7 @@ export default function Home() {
             textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
           }}
         >
-          🎁 {participant.name}
+          🎁 {participant.nickname}
         </div>
       ))}
 
@@ -489,41 +490,41 @@ export default function Home() {
       </button>
 
       {/* Main content */}
-      <div className="max-w-md mx-auto relative z-10">
+      <div className="max-w-md mx-auto relative z-10 px-2 sm:px-0">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Gift className="w-12 h-12 text-yellow-300" />
-            <h1 className="text-5xl font-bold text-yellow-300" style={{ textShadow: '3px 3px 6px rgba(0,0,0,0.5)' }}>
+        <div className="text-center mb-4 sm:mb-8">
+          <div className="flex items-center justify-center gap-2 mb-2 sm:mb-4">
+            <Gift className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-300" />
+            <h1 className="text-3xl sm:text-5xl font-bold text-yellow-300" style={{ textShadow: '3px 3px 6px rgba(0,0,0,0.5)' }}>
               MIAM Magical Drawer
             </h1>
-            <Gift className="w-12 h-12 text-yellow-300" />
+            <Gift className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-300" />
           </div>
-          <p className="text-xl text-green-200">Join the festive musical note exchange!</p>
+          <p className="text-base sm:text-xl text-green-200">Join the festive musical note exchange!</p>
           
           {/* Countdown Timer - only show in registration phase */}
           {phase === 'registration' && timeRemaining && (
-            <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border-2 border-yellow-300/50">
-              <p className="text-sm text-yellow-300 mb-2 font-semibold">⏰ Time Remaining</p>
-              <div className="flex justify-center gap-3 text-white">
+            <div className="mt-3 sm:mt-6 bg-white/10 backdrop-blur-md rounded-xl p-3 border-2 border-yellow-300/50">
+              <p className="text-xs sm:text-sm text-yellow-300 mb-2 font-semibold">⏰ Time Remaining</p>
+              <div className="flex justify-center gap-2 sm:gap-3 text-white">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-300">{timeRemaining.days}</div>
+                  <div className="text-xl sm:text-3xl font-bold text-yellow-300">{timeRemaining.days}</div>
                   <div className="text-xs text-green-200">Days</div>
                 </div>
-                <div className="text-3xl font-bold text-yellow-300">:</div>
+                <div className="text-xl sm:text-3xl font-bold text-yellow-300">:</div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-300">{String(timeRemaining.hours).padStart(2, '0')}</div>
+                  <div className="text-xl sm:text-3xl font-bold text-yellow-300">{String(timeRemaining.hours).padStart(2, '0')}</div>
                   <div className="text-xs text-green-200">Hours</div>
                 </div>
-                <div className="text-3xl font-bold text-yellow-300">:</div>
+                <div className="text-xl sm:text-3xl font-bold text-yellow-300">:</div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-300">{String(timeRemaining.minutes).padStart(2, '0')}</div>
-                  <div className="text-xs text-green-200">Minutes</div>
+                  <div className="text-xl sm:text-3xl font-bold text-yellow-300">{String(timeRemaining.minutes).padStart(2, '0')}</div>
+                  <div className="text-xs text-green-200">Min</div>
                 </div>
-                <div className="text-3xl font-bold text-yellow-300">:</div>
+                <div className="text-xl sm:text-3xl font-bold text-yellow-300">:</div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-300">{String(timeRemaining.seconds).padStart(2, '0')}</div>
-                  <div className="text-xs text-green-200">Seconds</div>
+                  <div className="text-xl sm:text-3xl font-bold text-yellow-300">{String(timeRemaining.seconds).padStart(2, '0')}</div>
+                  <div className="text-xs text-green-200">Sec</div>
                 </div>
               </div>
             </div>
@@ -532,10 +533,20 @@ export default function Home() {
 
         {/* Registration form or completion message */}
         {phase === 'registration' ? (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 mb-4 border-2 border-yellow-300/30">
-            <h2 className="text-xl font-bold mb-4 text-center text-yellow-300">Register Now! 🎄</h2>
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-5 mb-3 border-2 border-yellow-300/30">
+            <h2 className="text-lg sm:text-xl font-bold mb-3 text-center text-yellow-300">Register Now! 🎄</h2>
             
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <div>
+                <input
+                  type="text"
+                  value={formData.nickname}
+                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-yellow-300 text-sm"
+                  placeholder="Nickname"
+                />
+              </div>
+
               <div>
                 <input
                   type="text"
@@ -567,33 +578,33 @@ export default function Home() {
               </div>
 
               {error && (
-                <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-2 text-center text-sm">
+                <div className="bg-red-500/20 border-2 border-red-500 rounded-lg p-2 text-center text-xs sm:text-sm">
                   {error}
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-bold py-2.5 rounded-lg transition-all transform hover:scale-105 text-sm"
+                className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-700 hover:to-red-700 text-white font-bold py-2 rounded-lg transition-all transform hover:scale-105 text-sm"
               >
                 Join! 🎅
               </button>
             </form>
           </div>
         ) : (
-          <div className="bg-gradient-to-r from-green-600 to-red-600 backdrop-blur-md rounded-xl p-6 mb-4 border-4 border-yellow-300 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-white">🎁 Drawing is Done! 🎁</h2>
-            <p className="text-xl text-white mb-2">Please check your mailbox!</p>
-            <p className="text-sm text-yellow-200">📧 Emails have been sent to all participants</p>
+          <div className="bg-gradient-to-r from-green-600 to-red-600 backdrop-blur-md rounded-xl p-4 sm:p-6 mb-3 border-4 border-yellow-300 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-white">🎁 Drawing is Done! 🎁</h2>
+            <p className="text-lg sm:text-xl text-white mb-1 sm:mb-2">Please check your mailbox!</p>
+            <p className="text-xs sm:text-sm text-yellow-200">📧 Emails have been sent to all participants</p>
           </div>
         )}
 
         {/* Participants count */}
         <div 
           key={`${phase}-${participants.length}`}
-          className="text-center bg-white/10 backdrop-blur-md rounded-xl p-3 border-2 border-yellow-300/30"
+          className="text-center bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 border-2 border-yellow-300/30"
         >
-          <h3 className="text-lg font-bold text-yellow-300">
+          <h3 className="text-base sm:text-lg font-bold text-yellow-300">
             {participants.length} {participants.length === 1 ? 'Participant' : 'Participants'}
           </h3>
         </div>
@@ -715,7 +726,8 @@ export default function Home() {
                         >
                           <div className="flex justify-between items-start gap-3">
                             <div className="flex-1">
-                              <p className="font-bold">{p.name} {p.surname}</p>
+                              <p className="font-bold text-yellow-300">{p.nickname}</p>
+                              <p className="text-sm text-white/90">{p.name} {p.surname}</p>
                               {editingId === p.id ? (
                                 <div className="mt-2 flex gap-2">
                                   <input
