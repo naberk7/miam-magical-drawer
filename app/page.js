@@ -601,7 +601,7 @@ export default function Home() {
           ) : (
             <div className="bg-green-600/30 backdrop-blur-md rounded-xl p-3 mb-3 border-2 border-green-400">
               <p className="text-center text-white text-sm">
-                ✅ Done! Please check your inbox and see <span className="font-bold text-yellow-300">{userNickname}</span> floating around! 🎁
+                ✅ Done! Please check your inbox and see <span className="font-bold text-yellow-300">{userNickname}</span> floating around the page now! 🎁
               </p>
             </div>
           )
