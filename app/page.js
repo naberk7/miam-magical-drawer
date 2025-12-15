@@ -563,7 +563,7 @@ export default function Home() {
       }
     }
     
-    console.log('Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
+    console.log(`Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
     logActivity('DRAW_PERFORMED', `${participants.length} participants matched, ${emailsSent} emails sent, ${emailsFailed} failed`);
     alert(`Draw completed! ${emailsSent} assignment emails sent successfully!${emailsFailed > 0 ? ` (${emailsFailed} failed)` : ''}`);
   };
