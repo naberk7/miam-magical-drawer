@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Gift, Settings, X, Trash2 } from 'lucide-react';
+import { Gift, X, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function Home() {
@@ -22,8 +22,46 @@ export default function Home() {
   const [dataId, setDataId] = useState(null);
   const [userRegistered, setUserRegistered] = useState(false);
   const [userNickname, setUserNickname] = useState('');
+  const [activityLog, setActivityLog] = useState([]);
   
   const ADMIN_PASSWORD = '776110';
+
+  // Log admin activity
+  const logActivity = (action, details = '') => {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      action,
+      details,
+      participantCount: participants.length,
+      phase
+    };
+    
+    console.log('📋 ADMIN ACTIVITY:', logEntry);
+    
+    setActivityLog(prev => {
+      const newLog = [logEntry, ...prev].slice(0, 50); // Keep last 50 activities
+      // Save to localStorage for persistence
+      try {
+        localStorage.setItem('admin_activity_log', JSON.stringify(newLog));
+      } catch (e) {
+        console.error('Could not save activity log:', e);
+      }
+      return newLog;
+    });
+  };
+
+  // Load activity log from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedLog = localStorage.getItem('admin_activity_log');
+      if (savedLog) {
+        setActivityLog(JSON.parse(savedLog));
+      }
+    } catch (e) {
+      console.error('Could not load activity log:', e);
+    }
+  }, []);
 
   // Generate snowflakes once
   const [snowflakes] = useState(() => 
@@ -263,14 +301,18 @@ export default function Home() {
     if (passwordInput === ADMIN_PASSWORD) {
       setIsAdmin(true);
       setPasswordInput('');
+      logActivity('ADMIN_LOGIN', 'Admin panel accessed');
     } else {
       alert('Incorrect password');
       setPasswordInput('');
+      logActivity('FAILED_LOGIN_ATTEMPT', 'Incorrect password entered');
     }
   };
 
   const removeParticipant = (id) => {
+    const participant = participants.find(p => p.id === id);
     setParticipants(participants.filter(p => p.id !== id));
+    logActivity('PARTICIPANT_DELETED', `Deleted: ${participant.nickname} (${participant.email})`);
   };
 
   const startEdit = (participant) => {
@@ -298,11 +340,16 @@ export default function Home() {
       return;
     }
 
+    const participant = participants.find(p => p.id === id);
+    const oldEmail = participant.email;
+    
     setParticipants(participants.map(p => 
       p.id === id ? { ...p, email: editEmail.toLowerCase() } : p
     ));
     setEditingId(null);
     setEditEmail('');
+    
+    logActivity('EMAIL_EDITED', `${participant.nickname}: ${oldEmail} → ${editEmail}`);
   };
 
   const handleSetDeadline = (dateTimeString) => {
@@ -311,13 +358,22 @@ export default function Home() {
       return;
     }
 
+    const oldDeadline = deadline;
     setDeadline(dateTimeString);
     setShowDeadlinePicker(false);
+    
+    if (oldDeadline) {
+      logActivity('DEADLINE_CHANGED', `${new Date(oldDeadline).toLocaleString()} → ${new Date(dateTimeString).toLocaleString()}`);
+    } else {
+      logActivity('DEADLINE_SET', new Date(dateTimeString).toLocaleString());
+    }
   };
 
   const removeDeadline = () => {
     if (confirm('Are you sure you want to remove the deadline?')) {
+      const oldDeadline = deadline;
       setDeadline(null);
+      logActivity('DEADLINE_REMOVED', `Was: ${new Date(oldDeadline).toLocaleString()}`);
     }
   };
 
@@ -371,6 +427,7 @@ export default function Home() {
         setPhase('registration');
         setAssignments([]);
         console.log('=== RESET COMPLETE ===');
+        logActivity('DATABASE_RESET', `DELETED ${participantCount} participants, ${assignments.length} assignments`);
         alert('Reset complete! You can now add participants again.');
       }
     } catch (err) {
@@ -506,7 +563,8 @@ export default function Home() {
       }
     }
     
-    console.log(`Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
+    console.log('Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
+    logActivity('DRAW_PERFORMED', `${participants.length} participants matched, ${emailsSent} emails sent, ${emailsFailed} failed`);
     alert(`Draw completed! ${emailsSent} assignment emails sent successfully!${emailsFailed > 0 ? ` (${emailsFailed} failed)` : ''}`);
   };
 
@@ -575,20 +633,20 @@ export default function Home() {
         </div>
       ))}
 
-      {/* Admin button */}
-      <button
-        onClick={() => setShowAdmin(true)}
-        className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 p-3 rounded-full transition-all z-10"
-      >
-        <Settings className="w-6 h-6" />
-      </button>
-
       {/* Main content */}
       <div className="max-w-md mx-auto relative z-10 px-2 sm:px-0">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-8">
           <div className="flex items-center justify-center gap-2 mb-2 sm:mb-4">
-            <Gift className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-300" />
+            {/* Secret Admin Button - Left Gift */}
+            <button
+              onClick={() => setShowAdmin(true)}
+              className="cursor-pointer hover:scale-110 transition-transform duration-200"
+              style={{ background: 'none', border: 'none', padding: 0 }}
+              title=""
+            >
+              <Gift className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-300" />
+            </button>
             <h1 className="text-3xl sm:text-5xl font-bold text-yellow-300" style={{ textShadow: '3px 3px 6px rgba(0,0,0,0.5)' }}>
               MIAM Magical Drawer
             </h1>
@@ -894,6 +952,38 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
+                {/* Activity Log Section */}
+                <div className="mb-4 pb-4 border-b-2 border-white/20">
+                  <h3 className="text-lg font-bold mb-3 text-yellow-300">📋 Admin Activity Log</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 bg-blue-900/20 rounded-lg p-3 border-2 border-blue-400">
+                    {activityLog.length === 0 ? (
+                      <p className="text-center text-white/70 py-4 text-sm">No activity yet</p>
+                    ) : (
+                      activityLog.map((log, index) => (
+                        <div key={index} className="bg-white/10 rounded p-3 text-xs">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-blue-300">{log.action.replace(/_/g, ' ')}</span>
+                            <span className="text-white/50 text-[10px]">
+                              {new Date(log.timestamp).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          {log.details && (
+                            <div className="text-white/70 mt-1">{log.details}</div>
+                          )}
+                          <div className="text-white/50 text-[10px] mt-1">
+                            Phase: {log.phase} | Participants: {log.participantCount}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
                 
                 <div className="mt-4 pt-4 border-t-2 border-white/20 space-y-2">
                   {/* Draw button */}
