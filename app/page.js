@@ -89,6 +89,7 @@ export default function Home() {
   }, [deadline, phase, participants]);
 
   const loadData = async () => {
+    console.log('=== LOADING DATA FROM SUPABASE ===');
     try {
       const { data, error } = await supabase
         .from('drawer_data')
@@ -97,11 +98,20 @@ export default function Home() {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error loading data:', error);
+        console.error('❌ Error loading data:', error);
         return;
       }
 
       if (data) {
+        console.log('✅ DATA LOADED:', {
+          id: data.id,
+          participantCount: data.participants?.length || 0,
+          phase: data.phase,
+          deadline: data.deadline,
+          assignmentsCount: data.assignments?.length || 0,
+          lastUpdated: data.updated_at
+        });
+        
         setDataId(data.id);
         setParticipants(data.participants || []);
         setDeadline(data.deadline || null);
@@ -113,6 +123,7 @@ export default function Home() {
           setTimeout(() => setShowConfetti(false), 5000);
         }
       } else {
+        console.log('📝 No data found, creating initial record...');
         // Create initial record
         const { data: newData, error: insertError } = await supabase
           .from('drawer_data')
@@ -126,18 +137,26 @@ export default function Home() {
           .single();
 
         if (insertError) {
-          console.error('Error creating initial record:', insertError);
+          console.error('❌ Error creating initial record:', insertError);
         } else {
+          console.log('✅ Initial record created:', newData.id);
           setDataId(newData.id);
         }
       }
     } catch (err) {
-      console.error('Error in loadData:', err);
+      console.error('❌ EXCEPTION IN LOAD DATA:', err);
     }
   };
 
   const saveData = async () => {
     if (!dataId) return;
+
+    const timestamp = new Date().toISOString();
+    console.log('=== SAVING DATA ===', timestamp);
+    console.log('Participants count:', participants.length);
+    console.log('Phase:', phase);
+    console.log('Assignments count:', assignments.length);
+    console.log('Deadline:', deadline);
 
     try {
       const { error } = await supabase
@@ -147,15 +166,17 @@ export default function Home() {
           phase,
           deadline,
           assignments,
-          updated_at: new Date().toISOString()
+          updated_at: timestamp
         })
         .eq('id', dataId);
 
       if (error) {
-        console.error('Error saving data:', error);
+        console.error('❌ ERROR SAVING DATA:', error);
+      } else {
+        console.log('✅ DATA SAVED SUCCESSFULLY');
       }
     } catch (err) {
-      console.error('Error in saveData:', err);
+      console.error('❌ EXCEPTION IN SAVE DATA:', err);
     }
   };
 
@@ -301,31 +322,60 @@ export default function Home() {
   };
 
   const resetApp = async () => {
-    if (confirm('Are you sure you want to reset participants and assignments? The deadline will remain unchanged.')) {
-      try {
-        const { error } = await supabase
-          .from('drawer_data')
-          .update({
-            participants: [],
-            phase: 'registration',
-            assignments: [],
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', dataId);
+    const participantCount = participants.length;
+    const hasAssignments = assignments.length > 0;
+    
+    let warningMessage = `⚠️ DANGER: PERMANENT DATA DELETION ⚠️\n\n`;
+    warningMessage += `This will DELETE:\n`;
+    warningMessage += `- ${participantCount} registered participants\n`;
+    if (hasAssignments) {
+      warningMessage += `- ${assignments.length} assignments (emails were already sent!)\n`;
+    }
+    warningMessage += `\nThe deadline will remain unchanged.\n\n`;
+    warningMessage += `⚠️ THIS CANNOT BE UNDONE! ⚠️\n\n`;
+    warningMessage += `Type "DELETE" to confirm:\n`;
+    
+    const confirmation = prompt(warningMessage);
+    
+    if (confirmation !== 'DELETE') {
+      alert('Reset cancelled. Data is safe.');
+      return;
+    }
+    
+    // Second confirmation
+    if (!confirm(`Final confirmation: Delete ${participantCount} participants?`)) {
+      alert('Reset cancelled. Data is safe.');
+      return;
+    }
+    
+    console.log('=== RESET INITIATED ===');
+    console.log('Deleting participants:', participantCount);
+    console.log('Deleting assignments:', assignments.length);
+    
+    try {
+      const { error } = await supabase
+        .from('drawer_data')
+        .update({
+          participants: [],
+          phase: 'registration',
+          assignments: [],
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', dataId);
 
-        if (error) {
-          console.error('Error resetting:', error);
-          alert('Error resetting. Please try again.');
-        } else {
-          setParticipants([]);
-          setPhase('registration');
-          setAssignments([]);
-          alert('Reset complete! You can now add participants again.');
-        }
-      } catch (err) {
-        console.error('Error in resetApp:', err);
+      if (error) {
+        console.error('Error resetting:', error);
         alert('Error resetting. Please try again.');
+      } else {
+        setParticipants([]);
+        setPhase('registration');
+        setAssignments([]);
+        console.log('=== RESET COMPLETE ===');
+        alert('Reset complete! You can now add participants again.');
       }
+    } catch (err) {
+      console.error('Error in resetApp:', err);
+      alert('Error resetting. Please try again.');
     }
   };
 
@@ -336,52 +386,84 @@ export default function Home() {
     }
 
     if (phase === 'drawn') {
-      if (!confirm('Draw has already been performed. Do you want to redraw? This will create new assignments.')) {
+      if (!confirm('⚠️ IMPORTANT: Draw has already been performed and emails were sent.\n\nAre you ABSOLUTELY SURE you want to redraw?\n\nThis will:\n- Create NEW assignments\n- Send NEW emails to everyone\n- Override previous assignments\n\nOnly do this if there was an error!')) {
         return;
       }
     }
 
-    const shuffleArray = (array) => {
-      const newArray = [...array];
-      for (let i = newArray.length - 1; i > 0; i--) {
+    console.log('=== STARTING DRAW ===');
+    console.log('Participants:', participants.length);
+    
+    // Advanced derangement algorithm - ensures truly random matching with no patterns
+    const createDerangement = (arr) => {
+      const n = arr.length;
+      const indices = Array.from({ length: n }, (_, i) => i);
+      
+      // Fisher-Yates shuffle
+      for (let i = n - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        [indices[i], indices[j]] = [indices[j], indices[i]];
       }
-      return newArray;
-    };
-
-    let validAssignment = false;
-    let shuffled = [];
-    let attempts = 0;
-    const maxAttempts = 100;
-
-    while (!validAssignment && attempts < maxAttempts) {
-      shuffled = shuffleArray(participants);
-      validAssignment = true;
-
-      for (let i = 0; i < shuffled.length; i++) {
-        if (shuffled[i].id === participants[i].id) {
-          validAssignment = false;
+      
+      // Check if it's a valid derangement (no one gives to themselves)
+      for (let i = 0; i < n; i++) {
+        if (indices[i] === i) {
+          return null; // Invalid, try again
+        }
+      }
+      
+      // Additional check: avoid simple circular patterns by ensuring no adjacent pairs
+      // This makes matching more complex and unpredictable
+      let hasAdjacentPattern = false;
+      for (let i = 0; i < n - 1; i++) {
+        if (indices[i] === i + 1 && indices[i + 1] === i) {
+          hasAdjacentPattern = true;
           break;
         }
       }
+      // Check wraparound
+      if (indices[n - 1] === 0 && indices[0] === n - 1) {
+        hasAdjacentPattern = true;
+      }
+      
+      if (hasAdjacentPattern) {
+        return null; // Too simple, try again
+      }
+      
+      return indices;
+    };
 
+    let derangement = null;
+    let attempts = 0;
+    const maxAttempts = 1000;
+
+    while (!derangement && attempts < maxAttempts) {
+      derangement = createDerangement(participants);
       attempts++;
     }
 
-    if (!validAssignment) {
+    if (!derangement) {
       alert('Could not generate valid assignments. Please try again.');
+      console.error('Failed to create derangement after', maxAttempts, 'attempts');
       return;
     }
 
-    const newAssignments = participants.map((giver, index) => ({
-      giverId: giver.id,
-      giverName: `${giver.name} ${giver.surname}`,
-      giverEmail: giver.email,
-      receiverId: participants[(index + 1) % participants.length].id,
-      receiverName: `${participants[(index + 1) % participants.length].name} ${participants[(index + 1) % participants.length].surname}`,
-      receiverEmail: participants[(index + 1) % participants.length].email
-    }));
+    console.log('Valid derangement found after', attempts, 'attempts');
+    console.log('Derangement pattern:', derangement);
+
+    const newAssignments = participants.map((giver, index) => {
+      const receiverIndex = derangement[index];
+      const receiver = participants[receiverIndex];
+      
+      return {
+        giverId: giver.id,
+        giverName: `${giver.name} ${giver.surname}`,
+        giverEmail: giver.email,
+        receiverId: receiver.id,
+        receiverName: `${receiver.name} ${receiver.surname}`,
+        receiverEmail: receiver.email
+      };
+    });
 
     setAssignments(newAssignments);
     setPhase('drawn');
